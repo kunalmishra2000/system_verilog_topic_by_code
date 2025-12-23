@@ -1,0 +1,24 @@
+class packet;
+   int a=9;
+  function void post(string n);
+    $display("name=%s, a=%0d", n,a);
+  endfunction
+endclass
+module tab;
+  packet pac[int];
+
+  initial begin
+    // Create elements explicitly
+    for(int i=0; i<5; i++)begin
+    pac[i] = new();
+    end
+    //pac[1] = new();
+
+    pac[0].a = 88;
+    pac[1].a = 99;
+
+    foreach (pac[i]) begin
+      pac[i].post("after change index value");
+    end
+  end
+endmodule
