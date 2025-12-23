@@ -1,0 +1,29 @@
+
+//associative
+class packet;
+   int a=9;
+  function void post(string n);
+    $display("name=%s, a=%0d", n,a);
+  endfunction
+endclass
+
+module tab;
+  packet pac[int];  //  declare array as a associative array
+  initial begin
+ //   pac =new[6]; // array declare here
+    for(int i=0; i<5; i++)begin
+
+      pac[i]=new(); // memory allocated here
+      //pac[0].a=i;
+    //  pac[i].post("calling this function from  randomize and set random value");
+  end
+       pac[1].a=99;
+    pac[0].a=88;
+    
+    foreach(pac[i])begin
+    //  $display("array_of_class_pac[%0d]=%0p",i,pac[i].a);
+      pac[i].post("calling this function from  after change index 1 value");
+  end
+    
+  end
+endmodule
