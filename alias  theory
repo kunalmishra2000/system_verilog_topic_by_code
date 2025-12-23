@@ -1,0 +1,145 @@
+Great 🙂 Let’s look at **when `alias` is actually useful** and why you almost never see it in day-to-day RTL.
+
+---
+
+## 🔑 What `alias` really does
+
+`alias` makes **two names refer to the exact same object**.
+
+Think of it as:
+
+> “These two identifiers are literally the same signal.”
+
+Not a copy.
+Not an assignment.
+No direction.
+No conversion.
+
+---
+
+## ✅ Where `alias` *makes sense*
+
+### 1️⃣ Connecting signals inside **interfaces**
+
+This is the **most common and valid use case**.
+
+```systemverilog
+interface bus_if;
+  logic [7:0] data;
+  logic [7:0] data_m;
+  logic [7:0] data_s;
+
+  alias data = data_m;
+  alias data = data_s;
+endinterface
+```
+
+✔ All names refer to the same wire
+✔ No continuous assignments needed
+✔ Clean abstraction
+
+---
+
+### 2️⃣ Renaming signals for **readability**
+
+Useful when a signal has different meanings in different contexts.
+
+```systemverilog
+module tab;
+  logic [7:0] rx_data;
+
+  alias rx_data = payload;
+
+  initial begin
+    payload = 8'hAA;
+    $display("%h %h", rx_data, payload);
+  end
+endmodule
+```
+
+This avoids duplicate signals while improving clarity.
+
+---
+
+### 3️⃣ Verification / testbench code
+
+In testbenches, clarity matters more than synthesis rules.
+
+```systemverilog
+logic [31:0] packet;
+
+alias packet[7:0]  = header;
+alias packet[31:8] = body;
+```
+
+✔ Clean field naming
+✔ No packing/unpacking logic
+
+⚠ Many synthesizers **do not support this**, but simulators do.
+
+---
+
+## ❌ Where `alias` is a bad idea
+
+### 🚫 RTL design (most of the time)
+
+* Hard to debug
+* Poor tool support
+* Confusing signal ownership
+
+Continuous assignments are clearer:
+
+```systemverilog
+assign a = b;
+```
+
+---
+
+### 🚫 Different sizes or types
+
+```systemverilog
+int a;
+logic [7:0] b;
+alias a = b;   // ❌ illegal
+```
+
+No casting, no truncation, no extension.
+
+---
+
+## 🆚 `alias` vs `assign`
+
+| Feature               | `alias`       | `assign` |
+| --------------------- | ------------- | -------- |
+| Direction             | Bidirectional | One-way  |
+| Size conversion       | ❌             | ✅        |
+| Procedural assignment | ❌             | ❌        |
+| Same object           | ✅             | ❌        |
+| RTL friendly          | ❌             | ✅        |
+
+---
+
+## 🧠 Rule of thumb (important)
+
+> **If you’re writing synthesizable RTL, don’t use `alias`.**
+> **If you’re writing interfaces or testbenches, `alias` can be elegant.**
+
+---
+
+## ⚠ Tool support warning
+
+* Most simulators: ✅ support
+* Many synthesizers: ❌ partial or no support
+* FPGA flows: often ❌
+
+Always check your toolchain before using it.
+
+---
+
+If you want, next I can:
+
+* Show **interface + modport + alias** together
+* Show a **gotcha example** that causes race bugs
+* Explain why `alias` exists at all in the LRM
+
+Just tell me 👍
