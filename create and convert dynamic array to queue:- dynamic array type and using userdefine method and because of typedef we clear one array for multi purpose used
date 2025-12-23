@@ -1,0 +1,28 @@
+// create queue pf dynamic array and typedef used
+
+module tab;
+  typedef int a[];  // dynamic array type and using userdefine method 
+// because of typedef we clear one array for multi purpose used
+
+  a a1[$];  // queue of dynamic arrays convert dynamic array into queue
+
+  
+  initial begin ;
+   a1=new[5];
+    $display( " size of array[a1]=%0d", a1.size);
+  end
+  initial begin
+    a a2={0,1,2,33,55,77};
+    a a3={11,21,22,233,255,277};
+    $display( " size of array[a2]=%0d", a2.size);
+    $display( " size of array[a3]=%0d", a2.size);
+    
+      // Print as 2D-like structure
+    a1.push_back(a2);
+    a1.push_back(a3);
+    $display( " size of array[a1]=%0p", a1.size);  // how it working as a row and colum  like 2 d array 5 row and 7 colum
+
+      $display( " size of array[a1]=%0p", a1); 
+  end
+
+endmodule 
