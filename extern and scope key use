@@ -1,0 +1,24 @@
+// extern keyword:
+// Used when we want to declare a method inside a class
+// and define (implement) it outside the class.
+//
+// scope resolution (::):
+// this static method
+// Used to access class methods/properties and
+// to avoid name collisions.
+
+
+class packet;
+  extern function void display();
+    endclass
+    
+    function void packet::display();
+      $display(" this is the end ");
+    endfunction
+
+    module tab;
+      packet pac=new();
+      initial begin
+        pac.display();
+      end
+    endmodule 
