@@ -1,0 +1,27 @@
+//static array for class
+class packet;
+   int a=9;
+  function void post(string n);
+    $display("name=%s, a=%0d", n,a);
+  endfunction
+endclass
+
+module tab;
+  packet pac[5];  // class is queue of array
+  initial begin
+   
+    foreach(pac[i])begin
+
+      pac[i] =new();
+      pac[i].a=i;
+      pac[i].post("calling this function from  randomize and set random value");
+  end
+       pac[1].a=99;
+    
+    foreach(pac[i])begin
+    //  $display("array_of_class_pac[%0d]=%0p",i,pac[i].a);
+      pac[i].post("calling this function from  after change index 1 value");
+  end
+    
+  end
+endmodule
