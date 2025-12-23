@@ -1,0 +1,93 @@
+module tab;
+   string n= "kunal";
+  string m="mishra";
+  
+  initial begin : both_chara_not_name_chceking
+    if(n==m)
+      $display("[MATCH_TotAL_NUMBER_8*index_of_string] n=%s m=%s ", n,m);
+    else 
+      $display("[NOT_MATCH_TotAL_NUMBER_8*index_of_string] n=%s m=%s", n,m);
+  end
+  
+    initial begin :both_chara_is_not_euqal
+      if(n!=m)
+        $display("[condition_MATCH] n=%s m=%s ", n,m);
+    else 
+      $display("[condition_not_MATCH] n=%s m=%s", n,m);
+  end
+  
+      initial begin :both_chara_is_less_then
+        if(n<m)
+        $display("[condition_MATCH] n=%s m=%s ", n,m);
+    else 
+      $display("[condition_not_MATCH] n=%s m=%s", n,m);
+  end
+  
+   initial begin :both_chara_is_greater_then
+     if(n>m)
+        $display("[condition_MATCH] n=%s m=%s ", n,m);
+    else 
+      $display("[condition_not_MATCH] n=%s m=%s", n,m);
+  end
+   initial begin :both_chara_is_less_then_euqal_to
+        if(n<m)
+        $display("[condition_MATCH] n=%s m=%s ", n,m);
+    else 
+      $display("[condition_not_MATCH] n=%s m=%s", n,m);
+  end
+   initial begin :both_chara_is_greater_then_equal_to
+        if(n<m)
+        $display("[condition_MATCH] n=%s m=%s ", n,m);
+    else 
+      $display("[condition_not_MATCH] n=%s m=%s", n,m);
+  end
+  
+   initial begin //:Concatenations it is used to displays  using one methodss to full_name
+       
+     $display(" full_name=%s ", {n," ",m});
+
+  end
+   initial begin :Concatenations //repeated_string_multiple_time
+       
+     $display("name=%s", {3{n}});
+     
+     $display(" full_name=%s ", {3{n," ",m}});
+
+  end
+  
+  initial begin: indexed_displaay
+    $display("n=%s m=%s ", n[0],m[1]);
+  end
+  
+//     initial begin: range_displaay //issue
+//       $display("n=%s m=%s ", n.method([0:2]),m.method([1:3]));
+//   end
+  //  use all in_build_method
+    
+  initial begin
+
+      // length
+    $display("[LENTH] n=%0d m=%0d ", n.len,m.len);
+    
+//     size /this method not support
+//     $display("[size] n=%0d m=%0d ", n.size,m.size);
+    // putc method( index, character) index= which_index_we want to replace with character
+  
+      m.putc (3,"z"); //replacing charater
+    n.putc(0,"y"); //replacing charater
+    $display("[PUT_chara_index_and_replace_with_character] n=%s m=%s ", n,m);
+
+    // getc method
+    //gettting charater
+    $display("[getc_chara_index_character] n=%s m=%s ", n.getc(0),m.getc(4));
+    
+    // to convert all character in lower alphabet
+    $display("[to convert all character in lower alphabet] n=%s m=%s ", n.tolower,m.tolower);
+    
+    // to convert all character in big alphabet  
+    $display ("str.substr(4,8) = %s", n.substr (0,3));
+  end
+
+  
+  
+endmodule
