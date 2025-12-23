@@ -1,0 +1,10 @@
+// queue_slicing
+module tab;
+  int a[$]='{101,22,4,7,8,9};
+  initial begin
+    $display("a=%0p", a);
+    // slicing 
+    $display("a=%0p", a[0:2]);
+
+  end
+endmodule 
