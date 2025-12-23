@@ -1,0 +1,24 @@
+// const methdo use
+//it's use to fixed the value like static 
+// it's not override
+// this class for variable const
+// const key
+//read only mode
+//its value cannot be changed anywhere else after this initial declaration.
+// class packet;
+//    const int a=9;
+      
+//   function void display();
+//       $display("a=%0d",a);
+//   endfunction
+// endclass
+  
+  
+// module tab;
+//   packet pac=new();
+//   initial begin
+//      pac.a=90; //overide the value  . if we try then through error
+//     pac.display();
+//   end
+// endmodule
+
