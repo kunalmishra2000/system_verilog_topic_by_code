@@ -1,0 +1,229 @@
+//randcase 10 
+/*Example:
+
+If you have three branches with the weights 1, 5, and 3, respectively, the total weight sum is 9. The probability of selecting each branch is:
+
+1/9 ≈ 11.11% for the first case.
+
+5/9 ≈ 55.56% for the second case.
+
+3/9 ≈ 33.33% for the third case.*/
+
+                                                      // second example:-
+
+/*There is no fixed upper limit like 10 for randcase weights in SystemVerilog.
+
+The weights can be any positive integer
+
+What matters is the ratio between weights, not their absolute value
+
+The simulator just adds all weights and chooses proportionally
+
+Example with weights greater than 10
+randcase
+  20 : a = 1;   // 20 / (20+30+50) = 20%
+  30 : a = 2;   // 30%
+  50 : a = 3;   // 50%*/
+
+
+                                              //theory of randcase
+/*randcase is basically used to control randomization.
+
+In simple words
+
+randcase lets you:
+
+Randomly choose one statement
+
+While controlling how often each choice happens
+
+So it’s random, but not equally random — it’s weighted randomization.
+
+Why randcase is useful
+
+Without control, randomization is uniform:
+
+a = $urandom_range(0,2); // all values equally likely
+
+
+With randcase, you control the probability:
+
+randcase
+  1 : a = 0;   // rare
+  3 : a = 1;   // medium
+  6 : a = 2;   // frequent
+endcase
+
+
+Here:
+
+a=0 → 10%
+
+a=1 → 30%
+
+a=2 → 60%*/
+//randcase gives you controlled randomness — random, but on your terms.
+
+/*dist (weighted constraints) and randcase BOTH control randomization, but they are used for different purposes.
+
+How they are similar
+
+Both allow weighted randomization:
+
+dist example
+rand bit [1:0] a;
+
+constraint c_dist {
+  a dist { 0 := 1, 1 := 3, 2 := 6 };
+}
+
+randcase example
+randcase
+  1 : a = 0;
+  3 : a = 1;
+  6 : a = 2;
+endcase
+
+
+✔ Same probabilities
+✔ Same idea of weights
+
+The BIG difference
+🔹 dist controls WHAT VALUE a random variable takes
+🔹 randcase controls WHAT CODE PATH executes
+When to use dist
+
+Use dist when:
+
+You are randomizing variables
+
+You want the solver to choose values
+
+You want constraints to work together
+
+Example:
+
+class packet;
+  rand bit [3:0] size;
+
+  constraint c {
+    size inside {[1:10]};
+    size dist { 1 := 1, [2:9] := 8, 10 := 1 };
+  }
+endclass
+
+
+✔ Solver-friendly
+✔ Works with other constraints
+✔ Better for data modeling
+
+When to use randcase
+
+Use randcase when:
+
+You want to randomize behavior
+
+You want to choose between actions
+
+You want conditional execution
+
+Example:
+
+task drive();
+  randcase
+    1 : send_idle();
+    4 : send_data();
+    1 : send_error();
+  endcase
+endtask
+
+
+✔ Great for stimulus flow
+✔ Not tied to variables
+✔ Easier for behavior modeling
+
+Why they are NOT interchangeable
+
+🚫 You cannot use randcase inside constraints
+🚫 dist cannot execute code
+
+Simple rule to remember 🧠
+
+dist = weighted values
+randcase = weighted behavior*/
+
+//randcase control the randomization what come after randomization but dist use to collect/select value what we need after randomization
+/*Corrected understanding (very important)
+🔹 dist
+
+👉 Controls what values the solver picks DURING randomization
+
+Used inside constraints
+
+Affects the random variable values
+
+Happens while randomize() is running
+
+Example:
+
+rand bit [2:0] a;
+
+constraint c {
+  a dist { 0 := 1, 1 := 3, 2 := 6 };
+}
+
+
+➡️ The solver decides a’s value using weights.
+
+🔹 randcase
+
+👉 Controls what CODE executes AFTER randomization
+
+Used in procedural code
+
+Does not constrain variables
+
+Happens after randomize() completes
+
+Chooses behavior, not values
+
+Example:
+
+function void post_randomize();
+  randcase
+    1 : send_idle();
+    3 : send_data();
+    6 : send_error();
+  endcase
+endfunction
+
+
+➡️ One of the actions is chosen randomly.*/
+
+
+class pakcet;
+rand bit[2:0] a;
+  function post();
+    for(int i=0; i<8; i++)begin
+        randcase
+      2: a = 2;  // Assign 3'b010 to 'a' when the random case is 2
+      3: a = 3'b011;  // Assign 3'b011 to 'a' when the random case is 3
+      5: a = 3'b101;  // Assign 3'b101 to 'a' when the random case is 5
+               endcase
+       $display("a=%0d", a);
+    end
+  endfunction
+  function void post_randomize();
+      
+
+  endfunction
+  
+endclass
+
+module tab;
+  pakcet pac=new();
+  initial begin
+   pac.randomize();
+    pac.post();
+  end
+endmodule 
