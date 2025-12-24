@@ -1,3 +1,72 @@
+//example
+First: important correction ❗
+
+👉 Weights are NOT percentages by themselves
+👉 They are relative numbers used to calculate probability
+
+Case 1️⃣
+[7:9] := 10
+
+Meaning:
+Each value in the range gets weight 10
+
+Values:
+
+7 → weight 10
+
+8 → weight 10
+
+9 → weight 10
+
+Total weight from this range = 30
+
+❌ NOT “divide by 10”
+✔ It’s assign 10 to each value
+
+Case 2️⃣
+[7:9] :/ 10
+
+Meaning:
+The entire range gets total weight 10, which is divided among values
+
+Values:
+
+Total values = 3 (7, 8, 9)
+
+Each value gets weight = 10 / 3 ≈ 3.33
+
+✔ Your understanding here is correct ✅
+
+Very important detail ⚠️
+
+SystemVerilog does allow fractional weights internally, even though you write integers.
+
+So:
+
+7 → 3.33
+8 → 3.33
+9 → 3.33
+
+
+(Conceptually — simulator handles this internally.)
+
+Side-by-side (clear table)
+Constraint	Weight of 7	Weight of 8	Weight of 9	Total
+[7:9] := 10	10	10	10	30
+[7:9] :/ 10	3.33	3.33	3.33	10
+Final corrected sentence (very important)
+
+[7:9] := 10 means each value gets weight 10,
+[7:9] :/ 10 means the whole range gets weight 10, divided among all values.
+
+Memory trick 🧠
+
+:= → multiply weight by number of values
+
+:/ → divide weight across values
+
+
+                                                              //THEORY_of_weight
 dist also gives you percentage-based randomization, just like randcase.
 
 You’re absolutely right.
