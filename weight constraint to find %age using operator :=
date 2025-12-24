@@ -1,0 +1,38 @@
+class packet;
+  rand bit [2:0] a;
+  int count_0_3;
+  int count_4;
+  int count_5_7;
+  int total;
+  //2*3=2*2*2=
+  constraint distribute { a dist { [0:3] := 10 , 4 :=20, [5:7] := 70};}
+
+  function void post_randomize();
+    if(a>=0 && a<=4)
+      count_0_3++;
+    else if( a==4)
+      count_4++;
+    else if(a>=5 && a<=7)
+      count_5_7++;
+    $display("a=%0d",a);
+    $display("count0_3=%0d count_4=%0d count_5_7=%0d",count_0_3, count_4, count_5_7);
+    total=count_0_3+count_4+ count_5_7;
+    $display("total_count class=%0d", total);
+    //find the percentage
+    $display("count_0_3=%0f", (count_0_3*100.0)/total);
+   $display("count_4=%0f", (count_4*100.0)/total);
+        $display("count_5_7=%0f", (count_5_7*100.0)/total);
+  endfunction
+endclass
+module tab;
+  int total_count=0;
+  packet pac=new();
+  initial begin
+    repeat(10)begin
+    pac.randomize();
+      total_count++;
+    
+    end
+      $display("total_count=%0d", total_count);
+  end
+endmodule 
