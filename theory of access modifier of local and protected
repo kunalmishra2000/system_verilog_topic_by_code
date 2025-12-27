@@ -244,4 +244,138 @@ If you want, I can show:
 ✅ interview question explanation
 
 Just say 👍
+Yes ✅ — **you *can* use `local` and `protected` with methods (functions/tasks)** in SystemVerilog.
+
+But there are **rules and limitations**, so let’s make it very clear.
+
+---
+
+## ✅ Short Answer
+
+| Modifier    | Can be used on methods? | Meaning                               |
+| ----------- | ----------------------- | ------------------------------------- |
+| `local`     | ✅ Yes                   | Only accessible inside the same class |
+| `protected` | ✅ Yes                   | Accessible in class + child classes   |
+| (default)   | ✅ Yes                   | Public – accessible everywhere        |
+
+---
+
+## 🔹 Example: `local` Method
+
+```systemverilog
+class packet;
+  local function void secret();
+    $display("Secret logic");
+  endfunction
+
+  function void call_secret();
+    secret();  // ✅ allowed
+  endfunction
+endclass
+
+packet p = new();
+// p.secret();   ❌ ERROR: local method
+```
+
+### ✅ Explanation:
+
+* `secret()` is **only visible inside `packet`**
+* External code **cannot call it**
+* Used for internal helper logic
+
+---
+
+## 🔹 Example: `protected` Method
+
+```systemverilog
+class packet;
+  protected function void calc();
+    $display("Base calculation");
+  endfunction
+endclass
+
+class child extends packet;
+  function void run();
+    calc();   // ✅ allowed
+  endfunction
+endclass
+
+packet p = new();
+// p.calc();  ❌ NOT allowed
+```
+
+### ✅ Explanation:
+
+* Parent class → allowed
+* Child class → allowed
+* Outside → ❌ not allowed
+
+---
+
+## 🔹 Important Rule ⚠️
+
+### ❌ You CANNOT override a `local` method
+
+```systemverilog
+class A;
+  local function void show();
+  endfunction
+endclass
+
+class B extends A;
+  function void show();  // ❌ ERROR
+  endfunction
+endclass
+```
+
+Why?
+👉 Because **local methods are invisible to child classes**
+
+---
+
+## 🔹 Can protected methods be overridden?
+
+✅ YES (if virtual)
+
+```systemverilog
+class A;
+  protected virtual function void show();
+    $display("A");
+  endfunction
+endclass
+
+class B extends A;
+  function void show();
+    $display("B");
+  endfunction
+endclass
+```
+
+---
+
+## 🔹 Summary Table
+
+| Feature                   | local | protected      | public |
+| ------------------------- | ----- | -------------- | ------ |
+| Accessible in same class  | ✅     | ✅              | ✅      |
+| Accessible in child class | ❌     | ✅              | ✅      |
+| Accessible outside        | ❌     | ❌              | ✅      |
+| Can be overridden         | ❌     | ✅ (if virtual) | ✅      |
+
+---
+
+## 🧠 Interview One-Liner
+
+> “Local and protected can be used with methods.
+> Local methods are strictly internal, protected methods allow inheritance, and only virtual methods can be overridden.”
+
+---
+
+If you want, I can next explain:
+✅ Why UVM uses protected methods
+✅ Why local is rare in UVM
+✅ Common interview traps
+
+Just tell me 👍
+
 
