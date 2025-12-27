@@ -1,0 +1,64 @@
+/*❌ You CANNOT access or override local or protected members from a module.
+
+Because:
+
+👉 Modules are NOT part of class inheritance
+👉 Override works only between parent–child classes*/
+
+class packet;
+  local  int a;
+   protected int b;
+  
+  function new();
+    a=6;
+    b=1;
+  endfunction
+  
+  /*ou are NOT overriding anything here.
+
+You are simply:
+➡ calling a public method (post)
+➡ which internally modifies local and protected variables.*/
+  
+ protected  virtual function  post(int d,e);
+    a=d;
+    b=e;
+   $display("[base] a=%0d,b=%0d", a,b);
+  endfunction 
+endclass
+
+class child extends packet;
+ 
+  
+  function  post(int d,e);  // this called overriding
+     a=d;  // we can't override and access local varibale inside extends class
+     b=e;  //but, we have option to override protected varibale and method through extends class
+     $display("[child] b=%0d",b);
+  endfunction endclass
+
+module tab;
+  child pac=new();
+  initial begin
+    pac.post(7,8);
+  end
+endmodule 
+
+//exxmaple
+// class packet;
+//   local int a;
+//   protected int b;
+
+//   function void show();
+//     $display("a=%0d b=%0d", a, b);
+//   endfunction
+// endclass
+
+// module tb;
+//   packet p = new();
+
+//   initial begin
+//     p.a = 5;   // ❌ ERROR (local)
+//     p.b = 6;   // ❌ ERROR (protected)
+//     p.show();  // ✅ Allowed (public method)
+//   end
+// endmodule
