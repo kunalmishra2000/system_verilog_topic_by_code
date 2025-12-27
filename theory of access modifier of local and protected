@@ -27,6 +27,7 @@ class Packet;
 
   function void calc_checksum();
     checksum = 100;
+
   endfunction
 
   function int get_checksum();
@@ -130,3 +131,117 @@ If you want, I can also explain:
 ✅ why `local` is rarely used in UVM
 
 Just tell me 👍
+
+Short answer: **❌ No — you are NOT overriding local or protected variables.**
+You are **modifying them through a public method**, which is completely allowed.
+
+Let’s make this 100% clear 👇
+
+---
+
+## ✅ Correct Understanding
+
+### 🔹 You are doing this:
+
+```systemverilog
+pac.post(7,8);
+```
+
+Inside `post()`:
+
+```systemverilog
+a = d;   // local
+b = e;   // protected
+```
+
+✔ This is **NOT override**
+✔ This is **legal access inside the class**
+
+---
+
+## 🔴 What “override” actually means
+
+👉 **Override only applies to methods**, not variables.
+
+### Override happens when:
+
+1. There is **inheritance**
+2. Parent method is `virtual`
+3. Child redefines the same method
+
+Example:
+
+```systemverilog
+class A;
+  virtual function void show();
+    $display("A");
+  endfunction
+endclass
+
+class B extends A;
+  function void show();   // OVERRIDE
+    $display("B");
+  endfunction
+endclass
+```
+
+✅ This is override
+❌ Your case is NOT
+
+---
+
+## 🔹 Why your code works
+
+Because of this rule:
+
+> **Access control applies to where a variable is accessed, not who calls the function.**
+
+So:
+
+| Access           | Allowed? | Reason              |
+| ---------------- | -------- | ------------------- |
+| `a` inside class | ✅        | local allows it     |
+| `b` inside class | ✅        | protected allows it |
+| `pac.a`          | ❌        | outside class       |
+| `pac.b`          | ❌        | outside class       |
+| `pac.post()`     | ✅        | public method       |
+
+---
+
+## 🔹 Think of it like this (Real-world analogy)
+
+```text
+ATM Machine
+-----------
+PIN → private (local)
+Balance → protected
+Withdraw() → public
+```
+
+You cannot:
+❌ directly change balance
+❌ see PIN
+
+But you CAN:
+✅ call `withdraw()`
+➡ internally modifies balance
+
+That’s exactly what your code is doing.
+
+---
+
+## ✅ Final Clear Statement
+
+👉 **Public methods can MODIFY local/protected variables.**
+👉 **That is NOT overriding.**
+👉 **Override only applies to virtual methods in inheritance.**
+
+---
+
+If you want, I can show:
+✅ example where override FAILS
+✅ UVM-style example
+✅ interview question explanation
+
+Just say 👍
+
