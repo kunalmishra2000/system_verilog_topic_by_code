@@ -1,0 +1,43 @@
+// in this code child create own method beeacuse child are p=not possible to visiable outside of the class 
+// so, in this we create child own memory for child class method 
+// and child don't  known   base class have same name of method  because of in visiblity
+// invisiblity provide by local access modifier method
+//  see this code
+
+/*Child creates its own method
+
+Child does not know base class has the same method
+
+Because the base method is local
+
+local makes it invisible
+
+So no overriding happens
+
+Child gets its own memory and method*/
+
+class packet;
+  local function post();
+    $display("[base]");
+  endfunction
+endclass
+
+class child extends packet;
+  function post();          // this is not overriding
+  //  Child creates a new method
+ // This method has no relation to base post()
+ //Base method is invisible, so child doesn't even know it exists
+    $display("[child]");
+  endfunction
+endclass
+
+module tab;
+  child pac = new();  //  child create own memory for child class and method 
+  initial begin
+    //Why this works:
+   //pac is of type child
+  //So compiler directly calls:
+    pac.post();
+    //Base class is never checked
+  end
+endmodule
