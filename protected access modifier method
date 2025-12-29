@@ -1,0 +1,31 @@
+
+
+
+// // protected access modifier
+// // protected method not possible access outside of class directlty .
+
+// class packet;
+//     int a;
+//     int b;
+     
+
+  
+//   function new();
+//     a=8;
+//     b=9;
+//   endfunction
+  
+//  protected function void post();
+//     $display("a=%0p", a);
+//   endfunction
+// endclass
+
+// module tab;
+//   packet pac=new();
+//   initial begin
+//     // try to access outside of the class
+//     pac.a=99;
+//     pac.b=100;
+//     pac.post();
+//   end
+// endmodule 
