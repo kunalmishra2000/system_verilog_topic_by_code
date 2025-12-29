@@ -1,0 +1,26 @@
+// // local access modifier
+// // local  variable not possible access outside of class directlty and indirectly.
+// class packet;
+//    local int a;
+//    local int b;
+     
+
+  
+//   function new();
+//     a=8;
+//     b=9;
+//   endfunction
+  
+//   function void post();
+//     $display("a=%0p", a);
+//   endfunction
+// endclass
+
+// module tab;
+//   packet pac=new();
+//   initial begin
+//     pac.a=10; // not possible to access outside of class
+//     pac.b=99; // not possible to access outside of class
+//     pac.post();
+//   end
+// endmodule
