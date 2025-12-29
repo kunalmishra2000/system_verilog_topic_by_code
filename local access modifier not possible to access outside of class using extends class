@@ -1,0 +1,43 @@
+
+
+// local access modifier
+// local method not possible access outside of class INdirectlty .
+// using:- extends class
+
+class packet;
+    int a;
+    int b;
+     
+
+  
+  function new();
+    a=8;
+    b=9;
+  endfunction
+  
+ local function void post();
+    $display("[base]a=%0p b=%0d", a,b);
+  endfunction
+endclass
+
+class child extends packet;
+  
+  function new();
+//Here, we can change access the base class variable and change/override  the value    
+   a=99;
+    b=100;
+  endfunction
+  
+  function void call_post();
+// we are try to acces protected method 
+    post();
+    //$display("[child]a=%0p b=%0d", a,b);
+  endfunction
+endclass
+module tab;
+  child pac=new();
+  initial begin
+
+    pac.call_post();
+  end
+endmodule 
