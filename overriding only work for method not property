@@ -1,0 +1,166 @@
+/*
+Overriding ≠ Changing a value
+
+Overriding means replacing inherited behavior at runtime via polymorphism.
+
+Changing a variable value is state modification, not overriding.*/
+
+//Overriding means redefining the same inherited virtual method in a child class to change its behavior.
+// actual code here,
+class packet;
+   int a=7;
+  function void post();
+    $display("a=%0d", a);
+  endfunction 
+  
+endclass
+
+module tab;
+  packet pac=new();
+  initial begin
+    pac.a=91; // here, override varible
+    pac.post();  //
+  end
+endmodule 
+//code is end 
+// Great question — this is **the exact point where most people get confused** 👍
+// Let’s be **very precise with terminology**.
+
+// ---
+
+// ## ❌ This is **NOT overriding**
+
+// ```systemverilog
+// pac.a = 91;
+// ```
+
+// This is **just assignment**, **not overriding**.
+
+// ---
+
+// ## 1️⃣ Why this is NOT overriding
+
+// ### Overriding requires:
+
+// 1. **Inheritance (`extends`)**
+// 2. **Same member name in parent & child**
+// 3. **Runtime polymorphism**
+
+// Your code has:
+
+// * ❌ No child class
+// * ❌ No inheritance
+// * ❌ No polymorphism
+
+// So **overriding cannot even happen** here.
+
+// ---
+
+// ## 2️⃣ What your code is actually doing
+
+// ```systemverilog
+// packet pac = new();
+// pac.a = 91;
+// ```
+
+// 👉 You are simply **changing the value of a public variable** of an object.
+
+// This is equivalent to:
+
+// ```sv
+// int x = 7;
+// x = 91;
+// ```
+
+// No OOP concept involved.
+
+// ---
+
+// ## 3️⃣ Think of overriding like this (very simple)
+
+// | Action                      | Is it overriding? |
+// | --------------------------- | ----------------- |
+// | Change variable value       | ❌ No              |
+// | Assign in constructor       | ❌ No              |
+// | Same variable name in child | ❌ No (hiding)     |
+// | Virtual method redefinition | ✅ YES             |
+
+// ---
+
+// ## 4️⃣ Compare with REAL overriding (method)
+
+// ```systemverilog
+// class base;
+//   virtual function void post();
+//     $display("base");
+//   endfunction
+// endclass
+
+// class child extends base;
+//   function void post();
+//     $display("child");
+//   endfunction
+// endclass
+// ```
+
+// ```sv
+// base b;
+// child c = new();
+// b = c;
+// b.post();
+// ```
+
+// ### Output
+
+// ```
+// child
+// ```
+
+// 👉 This is **true overriding**
+
+// ---
+
+// ## 5️⃣ Why language designers disallow variable overriding
+
+// Because:
+
+// * Data members are **compile-time bound**
+// * No `virtual` variables
+// * Would break object memory layout
+
+// So SystemVerilog **intentionally disallows** it.
+
+// ---
+
+// ## 6️⃣ Correct terminology for your example
+
+// ```sv
+// pac.a = 91;
+// ```
+
+// ✅ **Modifying a data member**
+// ✅ **Runtime assignment**
+// ❌ **Not overriding**
+
+// ---
+
+// ## 7️⃣ Interview one-liner (VERY IMPORTANT)
+
+// > **Assigning a value to a class variable is not overriding; overriding applies only to virtual methods and requires inheritance and runtime polymorphism.**
+
+// ---
+
+// ## 8️⃣ One-sentence takeaway
+
+// > **Overriding changes behavior via inheritance; assignment changes data, nothing more.**
+
+// ---
+
+// If you want, I can:
+
+// * Draw memory vs behavior diagram
+// * Show equivalent C++ example
+// * Show how UVM avoids public variables
+// * Give tricky interview questions on this exact confusion
+
+// Just say 👍
