@@ -12,7 +12,7 @@ Is inaccessible outside its own class
 Prevents polymorphism*/
 
 class packet;
-  local function post();
+  local virtual function post();
     $display("[base]");
   endfunction
 endclass
