@@ -1,0 +1,39 @@
+
+
+
+// // protected access modifier
+// // protected variable possible access outside of class INdirectlty .
+// // using:- extends class
+
+// class packet;
+//   protected  int a;
+//   protected  int b;
+     
+
+  
+//   function new();
+//     a=8;
+//     b=9;
+//   endfunction
+  
+//   function void post();
+//     $display("[base]a=%0p b=%0d", a,b);
+//   endfunction
+// endclass
+
+// class child extends packet;
+  
+//   function new();
+// //Here, we can change access the base class variable and change/override  the value    
+//    a=99;
+//     b=100;
+//   endfunction
+
+// endclass
+// module tab;
+//   child pac=new();
+//   initial begin
+
+//     pac.post();
+//   end
+// endmodule
