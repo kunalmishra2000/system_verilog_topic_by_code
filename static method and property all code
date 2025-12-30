@@ -1,0 +1,139 @@
+// static and non static check memory beheviors property 
+// class packet;
+// int packet_id;
+// static   int increment;
+  
+//   function new();
+//     increment++;
+//     packet_id=increment;
+//   endfunction
+  
+//   function void display();
+//     $display("increament=%0d, packet_id=%0d",increment, packet_id);
+//   endfunction
+  
+// endclass
+
+// module tab;
+//   packet pac[3];
+  
+//   initial begin
+//     foreach(pac[i])begin
+//     pac[i]=new();    
+//     pac[i].display();
+//     end
+//   end
+// endmodule 
+/*output for non-static
+  increament=1, packet_id=1
+increament=1, packet_id=1
+increament=1, packet_id=1
+*/
+
+/*output for static
+ increament=1, packet_id=1
+increament=2, packet_id=2
+increament=3, packet_id=3
+*/
+
+                         //static method
+// class packet;
+
+// static   int increment;
+  
+//   function new();
+//     increment++;
+//   endfunction
+  
+// static  function void display();
+//   $display("how many pakcet create=%0d",increment);
+//   endfunction
+  
+// endclass
+
+// module tab;
+//   packet pac[3];
+  
+//   initial begin
+//     foreach(pac[i])begin
+//     pac[i]=new();    
+//     pac[i].display();
+//     end
+//     pac[0].display();
+//     pac[1].display();  // each have 3 packet and use single memory
+//   end
+// endmodule 
+
+/*output
+how many pakcet create=1
+how many pakcet create=2
+how many pakcet create=3
+how many pakcet create=3
+how many pakcet create=3
+*/
+
+//Static method trying to access a non-static variable
+// class packet;
+
+//    int increment; // non static method
+  
+//   function new();
+//     increment++;
+//   endfunction
+  
+// static  function void display();
+//   $display("how many pakcet create=%0d",increment);
+//   endfunction
+  
+// endclass
+
+// module tab;
+//   packet pac[3];
+  
+//   initial begin
+//     foreach(pac[i])begin
+//     pac[i]=new();    
+//     pac[i].display();
+//     end
+ 
+//   end
+// endmodule 
+//output:- Illegal access of non-static member 'increment' from static method 
+ // 'packet::display'.
+
+
+//Accessing static class properties without creating an object
+
+// class packet;
+
+//    static int increment; // non static method
+  
+//   function new();
+//     increment++;
+//   endfunction
+  
+// static  function void display();
+//   $display("how many pakcet create=%0d",increment);
+//   endfunction
+  
+// endclass
+
+// module tab;
+//   packet pac[3];
+  
+//   initial begin
+//     foreach(pac[i])begin
+//       pac[i]=new();    
+ 
+//     end
+//     packet::display();   // direct access without creating object
+//   end
+// endmodule 
+
+
+
+
+
+
+
+
