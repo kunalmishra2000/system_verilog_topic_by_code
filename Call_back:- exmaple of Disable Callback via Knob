@@ -1,0 +1,75 @@
+//ExampleEnable / Disable Callback via Knob
+//Turn error injection ON/OFF without code changes
+
+// real projects use:
+// +ERR_EN=1 plusarg
+// config DB
+// // registers
+// Plusarg (+ERR_EN)
+// UVM config_db equivalent
+// Multiple error types
+// Coverage on injected errors
+
+// class packet;
+//   int a,b;
+//   int  c;
+//     int expects;
+// rand bit enable_error;
+//   function new();
+//     a=10;
+//     b=20;
+//   endfunction
+  
+//   function void expexted_data();
+//        expects= a+b;  //// BEFORE callback corruption
+//   endfunction
+  
+//   function  void sum();
+//     expexted_data();                       // expected (golden)
+//     if(enable_error==1)begin
+//     call_back();        // callback hook   // optional corruption
+//     c=a+b;              // actual result (always)
+//     $display("c=%0d", c);
+//     end
+//   endfunction
+  
+//   virtual function void call_back(); 
+//     // empty hook
+//   endfunction
+  
+// endclass
+
+// class ch extends packet;
+
+//     virtual function void call_back(); 
+//       if( enable_error==1)begin // enable once
+//  $display("ERROR INJECTION: Corrupting data");
+//     a=a ^ 32'hFF;   // inject this value as a error and check test is pass / fail if test fail then system and method working correctly
+//      end
+//     endfunction
+  
+// endclass
+
+// module tab;
+//   ch c1=new();
+//   initial begin
+//     /// testcase
+       
+//     repeat(5)begin   
+//     c1.sum();
+    
+    
+
+//   // assertion to check correctness  expect and actual
+
+//     assert (c1.c == c1.expects)  
+//       $info("DATA NOT CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c  );
+//      else 
+//        $error("DATA  CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c   );
+//     end
+//   end
+// endmodule 
+
+
+
+  
