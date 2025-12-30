@@ -60,4 +60,17 @@ module tab;
   end
   end
 endmodule 
-  
+
+// OUTPUT:- 
+  Expected Output (Explanation)
+c=30
+INFO: NO CORRUPTION
+c=30
+INFO: NO CORRUPTION
+ERROR INJECTION on call 3
+c=20
+ERROR: CORRUPTION DETECTED
+
+✔ Error injected only on 3rd call
+✔ Test correctly fails on corruption
+✔ Callback mechanism works as intended
