@@ -1,4 +1,7 @@
 //Example: Inject error on 3rd call to sum()
+//PCIe error on Nth TLP
+//Error after link is stable
+//Rare corner-case bugs
 
 class packet;
   int a,b;
