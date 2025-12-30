@@ -1,0 +1,60 @@
+//Example: Inject error on 3rd call to sum()
+
+class packet;
+  int a,b;
+  int  c;
+    int expects;
+
+  function new();
+    a=10;
+    b=20;
+  endfunction
+  
+  function void expexted_data();
+       expects= a+b;  //// BEFORE callback corruption
+  endfunction
+  
+  function  void sum();
+    expexted_data();
+    call_back();        // callback hook  // inject error
+    c=a+b;               // // actual result
+    $display("c=%0d", c);
+  endfunction
+  
+  virtual function void call_back(); 
+    // empty hook
+  endfunction
+  
+endclass
+
+class ch extends packet;
+ static int count=0;
+    virtual function void call_back(); 
+      count++;
+      if(count==3)begin   // here it's if loop become 3 then a==0 and inject error 
+ $display("ERROR INJECTION: Corrupting data");
+    a=0;   // inject this value as a error and check test is pass / fail if test fail then system and method working correctly
+      end
+    endfunction
+  
+endclass
+
+module tab;
+  ch c1=new();
+  initial begin
+    /// testcase
+    repeat(3)begin   // if loop become 3  then a=0 and through error
+    c1.sum();
+    
+    
+
+  // assertion to check correctness  expect and actual
+
+    assert (c1.c == c1.expects)  
+      $info("DATA NOT CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c  );
+     else 
+       $error("DATA  CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c   );
+  end
+  end
+endmodule 
+  
