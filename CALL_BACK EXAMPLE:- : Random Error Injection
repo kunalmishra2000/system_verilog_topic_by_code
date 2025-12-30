@@ -1,0 +1,88 @@
+//Example: Random Error Injection
+// Simulates: type of error
+// Bit flips
+// EMI / signal noise
+//Stress testing
+                                                        //Why this is useful in verification
+//This simulates real-world behavior like:
+//EMI noise
+//Bit flips
+//Timing glitches
+//Stress conditions
+//NOTE:- Errors don’t happen every time, they happen occasionally.
+class packet;
+  int a,b;
+  int  c;
+    int expects;
+
+  function new();
+    a=10;
+    b=20;
+  endfunction
+  
+  function void expexted_data();
+       expects= a+b;  //// BEFORE callback corruption
+  endfunction
+  
+  function  void sum();
+    expexted_data();
+    call_back();        // callback hook  // inject error
+    c=a+b;               // // actual result
+    $display("c=%0d", c);
+  endfunction
+  
+  virtual function void call_back(); 
+    // empty hook
+  endfunction
+  
+endclass
+
+class ch extends packet;
+
+    virtual function void call_back(); 
+// Each time callback() is called, pick a random number between 0 and 3.
+// If the number happens to be 0, inject an error. Otherwise, behave normally.”
+      if($urandom_range(0,9)==0)begin   
+ $display("ERROR INJECTION: Corrupting data");
+    a=a ^ 32'hFF;   // inject this value as a error and check test is pass / fail if test fail then system and method working correctly
+      end
+    endfunction
+  
+endclass
+
+module tab;
+  ch c1=new();
+  initial begin
+    /// testcase
+    repeat(5)begin   
+    c1.sum();
+    
+    
+
+  // assertion to check correctness  expect and actual
+
+    assert (c1.c == c1.expects)  
+      $info("DATA NOT CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c  );
+     else 
+       $error("DATA  CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c   );
+  end
+  end
+endmodule 
+  
+// Step-by-step:
+
+// $urandom_range(0,3) generates one random number
+
+// Possible values are: 0, 1, 2, 3
+
+// Each value has equal probability
+
+// 👉 So:
+
+// Random value	What happens
+// 0	✅ Error injected
+// 1	❌ No error
+// 2	❌ No error
+// 3	❌ No error
+
+// That’s why we say 25% chance.
