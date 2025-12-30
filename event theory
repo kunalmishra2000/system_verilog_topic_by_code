@@ -1,0 +1,779 @@
+// Event:
+// Used to synchronize processes (one process waits, another triggers)
+// It does NOT manage resources (no counting like semaphore)
+// It has inbuilt mechanisms: wait(), @event, ->event, triggered
+// Multiple threads can wait on the same event
+// When the event is triggered, all waiting threads wake up
+// | Operation            | Meaning                       |
+// | -------------------- | ----------------------------- |
+// | `event e;`           | Declare event                 |
+// | `-> e;`              | Trigger event                 |
+// | `@e;`                | Wait for event                |
+// | `wait(e.triggered);` | Wait until event is triggered |
+// | `e.triggered`        | Check if already triggered    |
+
+
+Your idea is **right**, but the wording is a bit confusing.
+Let me **correct it**, then explain with a **clear PCIe / UVM real-project example**, just like before.
+
+---
+
+## ✅ Corrected & clean version of your comments (event)
+
+```systemverilog
+// Event:
+// Used to synchronize processes (one process waits, another triggers)
+// It does NOT manage resources (no counting like semaphore)
+// It has inbuilt mechanisms: wait(), @event, ->event, triggered
+// Multiple threads can wait on the same event
+// When the event is triggered, all waiting threads wake up
+```
+
+---
+
+## 🔹 What an event actually does (very simple)
+
+👉 **Event is a signal, not a lock**
+
+* One thread says: **“I am done”**
+* Other threads say: **“I will wait until you are done”**
+
+⚠️ Event does **not**:
+
+* Protect shared data
+* Limit access
+* Count resources
+
+---
+
+## 🔑 Event in SystemVerilog – Key operations
+
+| Operation            | Meaning                       |
+| -------------------- | ----------------------------- |
+| `event e;`           | Declare event                 |
+| `-> e;`              | Trigger event                 |
+| `@e;`                | Wait for event                |
+| `wait(e.triggered);` | Wait until event is triggered |
+| `e.triggered`        | Check if already triggered    |
+
+---
+
+# 🚀 Real PCIe / UVM Project Example (Event)
+
+## **Wait for PCIe Link Training Completion**
+
+### 🔴 Real scenario
+
+In PCIe verification:
+
+* Link training (LTSSM) takes time
+* No TLP should be sent **before link is UP**
+* Multiple sequences must wait
+
+👉 Perfect use case for **event**
+
+---
+
+## 🔹 Event declaration (ENV)
+
+```systemverilog
+class pcie_env extends uvm_env;
+
+  event link_up_ev;
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    link_up_ev = new();
+  endfunction
+
+endclass
+```
+
+---
+
+## 🔹 LTSSM Monitor (Triggers event)
+
+```systemverilog
+class pcie_ltssm_mon extends uvm_component;
+
+  event link_up_ev;
+
+  virtual task run_phase(uvm_phase phase);
+    // Wait until DUT reaches L0
+    wait (dut.ltssm_state == L0);
+
+    `uvm_info(get_type_name(),
+              "PCIe Link UP detected", UVM_MEDIUM)
+
+    -> link_up_ev;  // Trigger event
+  endtask
+
+endclass
+```
+
+---
+
+## 🔹 Traffic Sequence (Waits for event)
+
+```systemverilog
+class pcie_mem_wr_seq extends uvm_sequence;
+
+  event link_up_ev;
+
+  virtual task pre_body();
+    `uvm_info(get_type_name(),
+              "Waiting for PCIe link up", UVM_MEDIUM)
+
+    @link_up_ev;   // Wait here
+
+    `uvm_info(get_type_name(),
+              "Link is UP, starting traffic", UVM_MEDIUM)
+  endtask
+
+  virtual task body();
+    // Send Memory Write TLPs
+  endtask
+
+endclass
+```
+
+---
+
+## 🔹 Multiple sequences waiting on same event
+
+```systemverilog
+fork
+  mem_wr_seq.start(seqr);
+  mem_rd_seq.start(seqr);
+  cfg_seq.start(seqr);
+join
+```
+
+✔ All sequences **wait**
+✔ LTSSM monitor triggers **once**
+✔ All sequences wake up together
+
+---
+
+## 🧠 Another Real PCIe Example
+
+### **Error Injection after Enumeration**
+
+* Enumeration sequence finishes
+* Then error injection must start
+
+```systemverilog
+event enum_done_ev;
+
+// Enumeration sequence
+-> enum_done_ev;
+
+// Error injection sequence
+@enum_done_ev;
+```
+
+---
+
+## 🆚 Event vs Semaphore (very important)
+
+| Feature          | Event              | Semaphore            |
+| ---------------- | ------------------ | -------------------- |
+| Synchronization  | ✅                  | ✅                    |
+| Resource control | ❌                  | ✅                    |
+| Counting         | ❌                  | ✅                    |
+| Multiple waiters | ✅                  | ❌ (limited by count) |
+| Use in PCIe      | Link-up, enum done | CFG, RAL, scoreboard |
+
+---
+
+## 💡 Interview One-Liner
+
+> **Event is used for synchronization where one process notifies others to proceed, such as waiting for PCIe link up or enumeration completion.**
+
+---
+
+If you want next, I can:
+
+* Show **event vs semaphore bug example**
+* Explain `@event` vs `wait(event.triggered)`
+* Give **UVM phase + event coordination**
+* Combine **event + semaphore** in one PCIe test
+
+Just say 👍
+
+  Below are **REAL bugs** that actually happen in **PCIe UVM projects** when **event** and **semaphore** are misused.
+I’ll show **wrong code → what goes wrong → correct code**, very clearly.
+
+---
+
+# 🚨 Bug-1: Using **event** to protect a shared resource
+
+### (This is a classic PCIe scoreboard / RAL bug)
+
+---
+
+## ❌ WRONG: Event used like a lock
+
+### Scenario
+
+* RX monitor and TX monitor update **same scoreboard queue**
+* Developer uses **event** instead of semaphore
+
+```systemverilog
+event sb_ev;
+
+function void write_rx_tlp(pcie_tlp tlp);
+  @sb_ev;              // wait
+  exp_q.push_back(tlp);
+  -> sb_ev;            // trigger
+endfunction
+
+function void write_tx_tlp(pcie_tlp tlp);
+  @sb_ev;              // wait
+  compare(tlp);
+  -> sb_ev;            // trigger
+endfunction
+```
+
+---
+
+## 💥 What goes wrong?
+
+* Both threads may wake up **at the same time**
+* Event has **no ownership**
+* No mutual exclusion
+* Queue corruption / random compare failures
+
+❗ **Event ≠ mutex**
+
+---
+
+## ✅ CORRECT: Use semaphore for shared resource
+
+```systemverilog
+semaphore sb_sem = new(1);
+
+function void write_rx_tlp(pcie_tlp tlp);
+  sb_sem.get(1);
+  exp_q.push_back(tlp);
+  sb_sem.put(1);
+endfunction
+
+function void write_tx_tlp(pcie_tlp tlp);
+  sb_sem.get(1);
+  compare(tlp);
+  sb_sem.put(1);
+endfunction
+```
+
+✔ Only one thread at a time
+✔ Deterministic scoreboard
+✔ No random failures
+
+---
+
+# 🚨 Bug-2: Using **semaphore** to wait for PCIe link-up
+
+### (Deadlock bug)
+
+---
+
+## ❌ WRONG: Semaphore for notification
+
+```systemverilog
+semaphore link_sem = new(0);
+
+// Traffic sequence
+task run();
+  link_sem.get(1);   // WAIT for link up
+  send_tlp();
+endtask
+
+// LTSSM monitor
+task run();
+  if (ltssm_state == L0)
+    link_sem.put(1);
+endtask
+```
+
+---
+
+## 💥 What goes wrong?
+
+* If monitor runs **before** sequence
+* `put()` happens first
+* Semaphore count becomes 1
+* Sequence later does `get()` → OK
+
+BUT…
+
+⚠️ If **multiple sequences** do `get(1)`
+
+* Only ONE wakes up
+* Others block forever
+
+❗ Link-up is **broadcast**, not resource
+
+---
+
+## ✅ CORRECT: Use event for link-up
+
+```systemverilog
+event link_up_ev;
+
+// Monitor
+-> link_up_ev;
+
+// All sequences
+@link_up_ev;
+```
+
+✔ All sequences wake up
+✔ No deadlock
+✔ Correct semantics
+
+---
+
+# 🚨 Bug-3: Missing event trigger (lost event)
+
+---
+
+## ❌ WRONG
+
+```systemverilog
+event enum_done_ev;
+
+// Enumeration finishes early
+-> enum_done_ev;
+
+// Error injection sequence starts later
+@enum_done_ev;   // ❌ waits forever
+```
+
+---
+
+## 💥 What goes wrong?
+
+* Event triggered **before wait**
+* Event does **not remember history**
+* Sequence blocks forever
+
+---
+
+## ✅ CORRECT FIX-1: Use `triggered`
+
+```systemverilog
+if (!enum_done_ev.triggered)
+  @enum_done_ev;
+```
+
+---
+
+## ✅ CORRECT FIX-2: Use semaphore or flag
+
+```systemverilog
+bit enum_done;
+
+// Enumeration
+enum_done = 1;
+
+// Error injection
+wait (enum_done);
+```
+
+---
+
+# 🚨 Bug-4: Mixing event + shared data (race)
+
+---
+
+## ❌ WRONG
+
+```systemverilog
+event data_ready;
+int data;
+
+task producer();
+  data = 32'hDEAD;
+  -> data_ready;
+endtask
+
+task consumer();
+  @data_ready;
+  $display("data=%h", data); // race possible
+endtask
+```
+
+---
+
+## 💥 What goes wrong?
+
+* Multiple consumers read same data
+* Data may change before read
+* No protection
+
+---
+
+## ✅ CORRECT: Event + Semaphore together
+
+```systemverilog
+event data_ready;
+semaphore data_sem = new(1);
+int data;
+
+task producer();
+  data_sem.get(1);
+  data = 32'hDEAD;
+  data_sem.put(1);
+  -> data_ready;
+endtask
+
+task consumer();
+  @data_ready;
+  data_sem.get(1);
+  $display("data=%h", data);
+  data_sem.put(1);
+endtask
+```
+
+---
+
+# 🧠 Golden Rule (Very Important)
+
+> **Event = “When can I start?”**
+> **Semaphore = “Who is allowed to access?”**
+
+---
+
+# 🆚 Quick Decision Table
+
+| Situation             | Use       |
+| --------------------- | --------- |
+| PCIe link up          | Event     |
+| Enumeration done      | Event     |
+| Config space access   | Semaphore |
+| Shared scoreboard     | Semaphore |
+| Notify many sequences | Event     |
+| Protect shared data   | Semaphore |
+
+---
+
+## 🎯 Interview Killer Line
+
+> **Using event instead of semaphore for shared resources causes race conditions, while using semaphore instead of event for notifications can cause deadlocks.**
+
+---
+
+If you want next, I can:
+
+* Show **waveform-level bug**
+* Give **PCIe regression failure example**
+* Explain **event ordering inside UVM phases**
+* Show **mailbox vs event vs semaphore**
+
+Just say 👍
+Below is **exactly what you asked for** — **waveform-level bug explanation** + **real PCIe regression failure example**, explained **step-by-step** the way it shows up in actual projects.
+
+I’ll keep it **visual (ASCII waveforms)** and **realistic**, not theory.
+
+---
+
+# 1️⃣ Waveform-Level Bug
+
+## ❌ Event used instead of Semaphore (Race Condition)
+
+### 📌 Scenario (Very common)
+
+* RX Monitor and TX Monitor update **same scoreboard queue**
+* Event used to “control access”
+
+---
+
+## ❌ Wrong Code (root cause)
+
+```systemverilog
+event sb_ev;
+
+task rx_mon();
+  @sb_ev;
+  exp_q.push_back(rx_tlp);
+  -> sb_ev;
+endtask
+
+task tx_mon();
+  @sb_ev;
+  compare(tx_tlp);
+  -> sb_ev;
+endtask
+```
+
+---
+
+## 🔍 Waveform-Level Timeline
+
+```
+Time →
+---------------------------------------------------------------
+
+sb_ev        ____/¯¯\__________/¯¯\__________
+                 ↑              ↑
+               trigger         trigger
+
+RX thread    wait | RUN -----------------------|
+                exp_q.push
+
+TX thread    wait | RUN -----------------------|
+                compare()
+
+exp_q size       0 → 1 → ??? (corrupted)
+```
+
+### ❗ What happens in waveform?
+
+* Both RX and TX wake **at the SAME time**
+* Both execute **inside critical section**
+* Queue modified while being read
+
+⚠️ **No ownership, no exclusion**
+
+---
+
+## 💥 Result
+
+* Compare happens before push completes
+* Random mismatches
+* Failure depends on **delta cycles**
+
+---
+
+## ✅ Correct Waveform (Semaphore)
+
+```systemverilog
+semaphore sb_sem = new(1);
+```
+
+```
+Time →
+---------------------------------------------------------------
+
+sb_sem count   1 → 0 → 1 → 0 → 1
+
+RX thread      get | RUN ----------| put
+TX thread           wait | RUN ----------| put
+
+exp_q size     0 → 1 → stable
+```
+
+✔ Serialized access
+✔ Deterministic waveform
+
+---
+
+# 2️⃣ Waveform-Level Bug
+
+## ❌ Lost Event (Sequence waits forever)
+
+---
+
+### ❌ Wrong Code
+
+```systemverilog
+event link_up_ev;
+
+// LTSSM monitor
+-> link_up_ev;
+
+// Traffic sequence
+@link_up_ev;
+```
+
+---
+
+## 🔍 Waveform
+
+```
+Time →
+--------------------------------------------------
+
+link_up_ev   ____/¯¯\_________________________
+                 ↑
+             triggered early
+
+seq_wait         |-------- WAIT FOREVER -------|
+```
+
+### ❗ Why?
+
+* Event fired **before wait**
+* Event does **not latch**
+* No memory of past trigger
+
+---
+
+## ✅ Correct Waveform
+
+```systemverilog
+if (!link_up_ev.triggered)
+  @link_up_ev;
+```
+
+```
+Time →
+--------------------------------------------------
+
+link_up_ev   ____/¯¯\_________________________
+
+seq_wait     check | RUN ---------------------|
+```
+
+---
+
+# 3️⃣ PCIe Regression Failure Example
+
+## ❌ Random CFG Read Mismatch (Real Project Issue)
+
+---
+
+### 📌 Test Name
+
+```
+pcie_cfg_parallel_stress
+```
+
+### 📌 Setup
+
+* CPU config sequence
+* Error injection config sequence
+* Both run in parallel
+* **No semaphore** on config access
+
+---
+
+### ❌ Failure Log (Realistic)
+
+```
+UVM_ERROR @ 123456ns [PCIE_SB]
+CFG READ MISMATCH
+ADDR : 0x04 (Command Register)
+EXP  : 0x00000007
+ACT  : 0x00000005
+```
+
+---
+
+### 🔍 Root Cause (Waveform)
+
+```
+Time →
+---------------------------------------------------------------
+
+CPU CFG WR     |---- WR 0x04 = 0x7 ----|
+
+ERR CFG WR          |---- WR 0x04 = 0x5 ----|
+
+CFG RD                    |---- RD 0x04 ----|
+
+Expected             0x7
+Actual               0x5   ❌
+```
+
+❗ Writes overlapped
+❗ Ordering broken
+❗ Regression fails randomly
+
+---
+
+### ✅ Fix
+
+```systemverilog
+semaphore cfg_sem = new(1);
+```
+
+```
+CPU WR   |---- WR ----|
+ERR WR        |---- WR ----|
+CFG RD               |---- RD ----|
+```
+
+✔ Clean ordering
+✔ Stable regression
+
+---
+
+# 4️⃣ PCIe Regression Failure Example
+
+## ❌ TLP Sent Before Link-Up
+
+---
+
+### ❌ Failure Log
+
+```
+UVM_FATAL [PCIE_PROTOCOL]
+TLP transmitted while LTSSM != L0
+Current state = POLLING
+```
+
+---
+
+### 🔍 Waveform
+
+```
+Time →
+--------------------------------------------------
+
+LTSSM      POLLING ----> CONFIG ----> L0
+
+TLP            |---- Memory Write ----|   ❌
+```
+
+---
+
+### ❌ Root Cause
+
+* No event synchronization
+* Sequence started before link-up
+
+---
+
+### ✅ Fix
+
+```systemverilog
+@link_up_ev;
+send_tlp();
+```
+
+```
+LTSSM      POLLING ----> CONFIG ----> L0
+link_up_ev                        ↑
+TLP                                     |---- WR ----|
+```
+
+✔ Protocol-correct
+✔ Regression stable
+
+---
+
+# 🧠 Final Golden Rule (Waveform View)
+
+```
+Event     : broadcast edge (no protection)
+Semaphore : exclusive level (protection)
+```
+
+---
+
+## 🎯 Interview Mic-Drop Line
+
+> **Event bugs show up as delta-cycle races and lost triggers in waveforms, while semaphore bugs show up as deadlocks or corrupted shared state causing random PCIe regression failures.**
+
+---
+
+If you want next, I can:
+
+* Draw **actual UVM phase vs event waveform**
+* Show **mailbox waveform bug**
+* Show **Gen4 stress regression failure**
+* Convert this into **interview answers + diagrams**
+
+Just say 👍
