@@ -1,0 +1,96 @@
+### 🔐 What does **Mutex** mean?
+
+**Mutex** means **Mutual Exclusion**.
+
+👉 **Only ONE thread/process is allowed to access a shared resource at a time.**
+
+---
+
+## 🔹 Simple definition (easy to remember)
+
+> **Mutex = Mutual Exclusion = One at a time**
+
+---
+
+## 🔹 Very simple real-life example
+
+🚻 **Bathroom key example**
+
+* One bathroom
+* One key
+* Whoever has the key can enter
+* Others must wait
+
+➡️ That key is a **mutex**
+
+---
+
+## 🔹 Mutex in SystemVerilog / UVM
+
+SystemVerilog does not have a separate `mutex` keyword.
+👉 We use **semaphore with count = 1** as a mutex.
+
+```systemverilog
+semaphore mutex = new(1); // 1 = only one allowed
+
+mutex.get(1);   // lock
+// critical section (shared resource access)
+mutex.put(1);   // unlock
+```
+
+---
+
+## 🔹 Why mutex is needed?
+
+Without mutex:
+
+* Multiple threads access same data
+* Race condition
+* Random / non-reproducible bugs
+
+With mutex:
+
+* Serialized access
+* Predictable behavior
+* Stable regression
+
+---
+
+## 🔹 Real PCIe example
+
+### Shared resource: **Configuration Space**
+
+```systemverilog
+semaphore cfg_mutex = new(1);
+
+task cfg_access();
+  cfg_mutex.get(1);     // lock
+  // CFG read/write TLP
+  cfg_mutex.put(1);     // unlock
+endtask
+```
+
+✔ Prevents overlapping CFG accesses
+✔ Correct ordering
+✔ No random mismatches
+
+---
+
+## 🔹 Mutex vs Event (one line)
+
+> **Mutex protects data**
+> **Event notifies status**
+
+---
+
+## 🎯 Interview-ready line
+
+> **A mutex ensures mutual exclusion by allowing only one thread to access a shared resource at a time.**
+
+If you want, I can also explain:
+
+* Mutex vs Semaphore
+* Mutex deadlock example
+* PCIe real bug due to missing mutex
+
+Just tell me 👍
