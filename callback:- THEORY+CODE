@@ -1,0 +1,308 @@
+// callback
+// Callback = a hook (empty method) provided in a class so that extra logic can be added later without modifying the original source code.
+
+// 👉 Mainly used for:
+// Error injection
+// Protocol rule checking
+// Coverage hooks
+// Debug / logging
+// UVM phase extensions
+                                                             //example
+// Why callbacks are needed (real verification reason)
+
+// In real projects (like PCIe IP verification, which you work on):
+
+// Base driver/monitor is shared across teams
+
+// You are NOT allowed to modify source code
+
+// But you still want to:
+
+// Inject errors
+
+// Add extra checks
+
+// Change behavior for some tests
+
+// ✅ Callbacks solve this cleanly
+
+                                                             // SystemVerilog Callback Mechanism (Concept)
+// Basic idea:
+
+// Main class declares an empty virtual function/task
+
+// Derived callback class overrides that function
+
+// Main class calls the function
+
+// If a callback is registered → extra logic executes
+
+
+                                                                           // example in sv
+
+class packet;
+  int a,b;
+  int  c;
+    int expects;
+
+  function new();
+    a=10;
+    b=20;
+  endfunction
+  
+  function void expexted_data();
+       expects= a+b;  //// BEFORE callback corruption
+  endfunction
+  
+  function  void sum();
+    expexted_data();
+    call_back();        // callback hook  // inject error
+    c=a+b;               // // actual result
+    $display("c=%0d", c);
+  endfunction
+  
+  virtual function void call_back(); 
+    // empty hook
+  endfunction
+  
+endclass
+
+class ch extends packet;
+  
+    virtual function void call_back(); 
+ $display("ERROR INJECTION: Corrupting data");
+    a=-90;   // inject this value as a error and check test is pass / fail if test fail then system and method working correctly
+    endfunction
+  
+endclass
+
+module tab;
+  ch c1=new();
+  initial begin
+    
+    c1.sum();
+    
+    
+
+  // assertion to check correctness  expect and actual
+
+    assert (c1.c == c1.expects)  
+      $info("DATA NOT CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c  );
+     else 
+       $error("DATA  CORRUPTION DETECTED expects=%0d actual =%0d",c1.expects,c1.c   );
+  end
+endmodule 
+  
+
+// explain this code why callback is usefull
+// Good catch 👍
+// Let me **justify clearly WHY this is valid error-injection logic**, and connect it to **real verification practice**, not just theory.
+
+// ---
+
+// ## 1️⃣ What “error injection” really means in verification
+
+// **Error injection ≠ random bug**
+
+// It means **intentionally violating an expected condition** to verify that:
+
+// * DUT detects the error
+// * DUT reports the error
+// * DUT recovers correctly
+
+// So any **controlled corruption** of:
+
+// * data
+// * timing
+// * ordering
+// * protocol fields
+//   is valid error injection.
+
+// ---
+
+// ## 2️⃣ What is the “correct” behavior here?
+
+// Normal (golden) behavior:
+
+// ```systemverilog
+// a = 10;
+// b = 20;
+// c = a + b;   // expected = 30
+// ```
+
+// This is the **reference behavior**.
+
+// ---
+
+// ## 3️⃣ What error did we inject?
+
+// In the callback:
+
+// ```systemverilog
+// virtual function void call_back();
+//   a = -100;   // intentional corruption
+// endfunction
+// ```
+
+// ### ✔ Why this is an error
+
+// * `a` is **not supposed to be negative**
+// * The sum result becomes **invalid**
+// * Functional expectation is violated
+
+// 👉 This is **data corruption error injection**
+
+// ---
+
+// ## 4️⃣ Why callback is the RIGHT place for this
+
+// ### Timing of execution:
+
+// ```systemverilog
+// function void sum();
+//   call_back();    // BEFORE calculation
+//   c = a + b;
+// endfunction
+// ```
+
+// This matches real hardware error cases:
+
+// | Real hardware                | Your code             |
+// | ---------------------------- | --------------------- |
+// | Corrupt data before transmit | Modify `a` before sum |
+// | Bad payload in TLP           | Wrong value used      |
+// | ECC error                    | Wrong bit value       |
+
+// So the **error enters the system naturally**, not forcefully.
+
+// ---
+
+// ## 5️⃣ What exactly are we testing with this error?
+
+// Assume DUT or checker expects:
+
+// ```systemverilog
+// assert (c == a + b);
+// ```
+
+// Now:
+
+// * Expected: `30`
+// * Actual: `-80`
+
+// ### ✔ What this verifies
+
+// * Scoreboard catches mismatch
+// * Error reporting path works
+// * Negative values are handled
+// * Corner cases are tested
+
+// ---
+
+// ## 6️⃣ Why this is NOT “fake” error injection
+
+// ### This is NOT:
+
+// ❌ random assignment
+// ❌ hard-coding wrong output
+// ❌ hacking base code
+
+// ### This IS:
+
+// ✅ controlled corruption
+// ✅ injected at protocol boundary
+// ✅ reversible (enable/disable callback)
+// ✅ reusable across tests
+
+// That’s exactly how **industry error injection** works.
+
+// ---
+
+// ## 7️⃣ Real UVM / PCIe mapping (very important)
+
+// Your simple example maps directly to PCIe:
+
+// | Simple code   | PCIe real world    |
+// | ------------- | ------------------ |
+// | `a = -100`    | Bad payload data   |
+// | `call_back()` | pre_drive callback |
+// | `sum()`       | TLP transmit       |
+// | wrong `c`     | Completion error   |
+// | display       | Error log          |
+
+// Example in PCIe:
+
+// ```text
+// – Corrupt LCRC
+// – Wrong Length field
+// – Invalid Tag
+// – Bad Alignment
+// ```
+
+// All are **data modifications before send**, just like your callback.
+
+// ---
+
+// ## 8️⃣ Why overriding in child class is intentional
+
+// ```systemverilog
+// class ch extends packet;
+// ```
+
+// This means:
+
+// * Base behavior stays clean
+// * Only **this test** injects error
+// * Other tests remain golden
+
+// This is **test-specific behavior**, which is the whole point of callbacks.
+
+// ---
+
+// ## 9️⃣ If you want “stronger” justification (assertion)
+
+// Add a checker:
+
+// ```systemverilog
+// assert (c == a + b)
+// else $error("DATA CORRUPTION DETECTED");
+// ```
+
+// Now your error injection has a **measurable failure**.
+
+// ---
+
+// ## 🔟 Interview-ready justification (one line)
+
+// > This callback injects a controlled data corruption before computation, allowing verification of error-detection and handling logic without modifying the base implementation.
+
+// ---
+
+// If you want next:
+
+// * Timing-based error injection
+// * Random error injection
+// * Enable/disable callback via knob
+// * Same logic using UVM callbacks
+// * PCIe bad-TLP example (real project style)
+
+// Just tell me 👍
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
