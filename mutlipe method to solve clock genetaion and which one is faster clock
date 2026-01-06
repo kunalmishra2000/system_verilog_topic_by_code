@@ -1,0 +1,246 @@
+// // how many way to sample to clock and check which one is faster clock
+
+// module tab;
+  
+//   bit clk1,clk2;
+  
+//   always #5 clk1= ~clk1;
+//   always #10 clk2= ~clk2;
+  
+// // take variable
+//   int time1,time2;
+//   int time_period1, time_period2;
+  
+//   //clock_1
+//   always @(posedge clk1)begin
+    
+//     if(time1 !=0)
+//       time_period1= $realtime-time1;
+//     time1=$realtime;
+//   end
+  
+//   //clock_2
+//   always @(posedge clk2)begin
+ 
+//     if(time2 !=0)
+//       time_period2= $realtime-time2;
+//        time2=$realtime;
+//   end
+  
+//     initial begin
+      
+      
+//       repeat(10)begin
+//                       #50;
+
+//       $display("clk1=%0d clk2=%0d", clk1,clk2);
+//         if(time_period1<time_period2)
+//         $display(" clk2 is greater clock1=%0t clk2=%0t", time_period1,time_period2);
+//         else if(time_period1>time_period2)
+//         $display(" clk1 is greater clock1=%0t clk2=%0t", time_period1,time_period2);
+//       else 
+//         $display(" BOTH HAVE SAME FRE clock1=%0f clk2=%0f", time_period1,time_period2);
+//       end
+//     #100;
+//     $finish();
+//   end
+//   initial begin
+//     $dumpfile("dump.vcd");
+//     $dumpvars();
+//   end
+// endmodule  
+
+// //other like using  counter and random_delay
+
+// // how many way to sample to clock and check which one is faster clock
+
+// module tab;
+  
+//   bit clk1,clk2;
+//   bit[3:0] delay1,delay2;
+//   initial begin
+//      clk1=0;
+//     clk2=0;
+//     fork
+//   forever #delay1 clk1= ~clk1;
+//   forever #delay2 clk2= ~clk2;
+//     join
+//   end
+// //use counter
+//   int counter1=0;
+//   int counter2=0;
+  
+//   //clock_1
+//   always @(posedge clk1)begin
+//  counter1++;
+//   end
+  
+//   //clock_2
+//   always @(posedge clk2)begin
+// counter2++;
+//   end
+  
+//     initial begin
+      
+      
+//       repeat(10)begin
+//           {delay1,delay2}=$urandom();
+//                       #20; //wait some time for calculate
+
+//       $display("clk1=%0d clk2=%0d", clk1,clk2);
+//         if(counter1<counter2)
+//           $display(" clk2 is greater clock1=%0t clk2=%0t", counter1,counter2);
+//         else if(counter1>counter2)
+//           $display(" clk1 is greater clock1=%0t clk2=%0t", counter1,counter2);
+//       else 
+//         $display(" BOTH HAVE SAME FRE clock1=%0f clk2=%0f", counter1,counter2);
+//       end
+//     #100;
+//     $finish();
+//   end
+//   initial begin
+  
+   
+    
+//     $dumpfile("dump.vcd");
+//     $dumpvars();
+//   end
+// endmodule  
+
+// my own method use multiple task  with generating clock also on different fre
+
+module tab;
+  //this for clock one
+   parameter fre1=200; //MHZ
+   parameter duty=70; // 70 % time clock is high
+  real time_period;
+  real time_on, time_of;
+  bit clk;
+  bit clk2;
+  
+  
+ // generate clock
+ always begin
+     #time_on clk =0;
+    #time_of clk=1;
+  end
+  
+// other method to generate clock
+//    initial  begin
+//   forever begin
+//     #time_on clk =0;
+//     #time_of clk=1;
+//   end
+//   end
+  
+ // this for clock 1 
+  initial begin
+   
+    time_period= 1/(fre1*1e6)*1e9;
+    time_on=(duty/100.0)*time_period;
+    time_of= time_period- time_on;
+
+    $display("time_period=%0f", time_period);
+    $display("time_on=%0f", time_on);
+    $display("time_of=%0f", time_of);
+
+
+  end
+
+  
+  // now we write logic to generate clok2
+  
+    //this for clock two
+   parameter fre2=100; //MHZ
+   parameter duty2=50; // 70 % time clock is high
+  real time_period2;
+  real time_on2, time_of2;
+
+  
+
+ initial $display("now we write logic to generate clok2");
+//  method to generate clock
+   initial  begin
+  forever begin
+    #time_on2 clk2=0;
+    #time_of2 clk2=1;
+  end
+  end
+  
+ // this for clock 1 
+  initial begin
+   
+    time_period2= 1/(fre2*1e6)*1e9;
+    time_on2=(duty2/100.0)*time_period2;
+    time_of2= time_period2- time_on2;
+
+    $display("time_period2=%0f", time_period2);
+    $display("time_on2=%0f", time_on2);
+    $display("time_of2=%0f", time_of2);
+
+
+  end
+    
+  
+   initial begin
+   clk=0;
+         clk2=0;
+     $dumpfile("dump.vcd");
+       $dumpvars();
+  #1000;
+  $finish();
+  
+  end 
+  initial $display(" compare which clock is greater");
+  // take variable
+  int current1, total_time1; // this is for clock1
+  int current2, total_time2; // this for clock2
+  
+  //clock1 logic
+  
+  task log_for_clock1();
+    @(posedge clk)
+    current1=$realtime;
+    @(posedge clk) // this next clock
+    total_time1= $realtime-current1;
+  endtask 
+  
+   //clock2 logic
+  
+  task log_for_clock2();
+    @(posedge clk2)
+    current2=$realtime;
+    @(posedge clk2) // this next clock
+    total_time2= $realtime-current2;
+  endtask 
+  
+// compare logic
+  task compare();
+    log_for_clock1();
+    log_for_clock2();
+    
+    if(total_time1>total_time2)
+      $display("clock_1 is greater total_time1=%0d total_time2=%0d", total_time1,total_time2);
+    else 
+      $display("clock_2 is greater total_time1=%0d total_time2=%0d", total_time1,total_time2);
+
+  endtask
+ 
+  
+  // write assertion imediate assertion
+ // initial  $display(" write assertion imediate assertion");
+
+  task assertion();
+  assert(total_time1>total_time2)
+    $info("[ASSERTION_PASS] clock_1 is greater total_time1=%0d total_time2=%0d", total_time1,total_time2);
+    else 
+      $info("{ASSERTION_pass] clock_2 is greater total_time1=%0d total_time2=%0d", total_time1,total_time2);
+  endtask 
+   
+ 
+                  
+                   initial begin
+    compare();
+   assertion();
+  end
+endmodule
