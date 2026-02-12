@@ -1,0 +1,31 @@
+                                     //argument pass by reference with the const keyword
+
+//ref → pass by reference (no copy, refers to original variable)
+//const → the function is NOT allowed to modify the argument
+//const ref means pass by reference, but make it read-only inside the function.
+//If you use const ref, you must NOT modify it:
+
+/*Why Use const ref?
+Avoid copying large data (arrays, structs, classes)
+Improve performance
+Protect data from accidental modification
+*/
+module tab;
+  
+  int x,y,out;
+  
+  function int sum(const ref int x,y);
+//     x= x+y;  // This changes outside the local copy   // this reflects outside the function in pass by reference method
+//   return x;
+    return x+y; // it's will work 
+    
+  endfunction
+  
+  initial begin
+    
+    x=8; //The original x is modified
+    y=9;
+    out =sum(x,y);
+    $display("x=%0d y=%0d z=%0d", x,y,out);
+  end
+endmodule 
