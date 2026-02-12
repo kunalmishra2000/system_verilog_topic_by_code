@@ -17,7 +17,14 @@ module tab;
     return x+y;
     
   endfunction
-  
+//other way 
+/*
+function int sum(int x,y);
+    x= x+y;  // This changes only the local copy   // this not reflect outside of the function in  pass by value method
+  return x;
+    
+  endfunction
+*/
   initial begin
     
     x=8;
