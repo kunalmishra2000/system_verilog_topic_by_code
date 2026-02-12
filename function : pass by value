@@ -1,0 +1,43 @@
+                        // pass by value 
+//It means if any change or update is made inside the function, the value outside the function is not updated in SystemVerilog. 
+//In SystemVerilog, pass by value means any changes made inside the function do not affect the original variable outside the function.
+
+/*
+Any changes made inside the function
+Do NOT affect the original variable outside the function
+Because only a copy was modified.
+*/
+
+module tab;
+  
+  int x,y,out;
+  
+  function int sum(int x,y);
+    x= x+y;  // This changes only the local copy   // this not reflect outside of the function in  pass by value method
+    return x+y;
+    
+  endfunction
+  
+  initial begin
+    
+    x=8;
+    y=9;
+    out =sum(x,y);
+    $display("x=%0d y=%0d z=%0d", x,y,out);
+  end
+endmodule 
+
+
+
+//analysis_output 
+Inside function (pass by value → local copies):
+
+Local x = 8
+
+Local y = 9
+
+x = x + y → x = 17
+
+return x + y → 17 + 9 = 26
+
+So:
