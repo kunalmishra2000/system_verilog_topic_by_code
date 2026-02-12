@@ -1,0 +1,30 @@
+                                                    //PASS_BY_REFERENCE
+// pass by refrence reflect outside of  function  and update outside of function variable 
+//ref key 
+//If you modify y inside the function, it will also change outside.
+//You must pass actual variables (not constants or expressions).
+/*Pass by Reference:
+
+Uses ref
+No copy is created
+Changes inside function reflect outside
+Actual variable memory is used*/
+
+module tab;
+  
+  int x,y,out;
+  
+  function int sum(ref int x,y);
+    x= x+y;  // This changes outside the local copy   // this reflects outside the function in pass by reference method
+  return x;
+    
+  endfunction
+  
+  initial begin
+    
+    x=8; //The original x is modified
+    y=9;
+    out =sum(x,y);
+    $display("x=%0d y=%0d z=%0d", x,y,out);
+  end
+endmodule 
